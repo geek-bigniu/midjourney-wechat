@@ -1,0 +1,22 @@
+# MJ_API接口地址
+api_url: http://xxx.com
+# 你的API密钥，可联系微信geek_bigniu获取
+api_key: xxxx
+# 检查消息是否已处理，防止同一群多个机器人重复处理
+check_url: http://xxx.com
+#发信邮件配置，请修改为你的邮箱
+smtp:
+  host: smtp.gmail.com
+  port: 587
+  username: xxx@gmail.com
+  password: xxxx
+# 掉线通知收件邮箱配置
+mail:
+  sender: xx@gmail.com
+  # 收件邮箱，可填写多个，多了可能会进垃圾箱
+  to:
+    - xx@qq.com
+  subject: MJBOT机器人需要登陆提醒
+  body:
+    请扫描下方二维码进行登陆
+

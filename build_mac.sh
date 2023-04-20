@@ -1,0 +1,1 @@
+CGO_ENABLED=0 go build -o ./mac/mj-wechat-bot-mac -trimpath main.go
