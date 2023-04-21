@@ -75,5 +75,6 @@ wechat.log
 config.yaml
 mac
 test
-storage.json
+*.json
 output.png
+.DS_Store
