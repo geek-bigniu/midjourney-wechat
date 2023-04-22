@@ -99,7 +99,7 @@ func QueryTaskStatus(taskID string) (bool, map[string]interface{}) {
 		return false, nil
 	}
 
-	log.Printf("body:%s -> %s", taskID, body)
+	log.Printf("任务【%s】返回结果 -> %s", taskID, body)
 	var response Response
 	if err := json.Unmarshal([]byte(body), &response); err != nil {
 		fmt.Println(err)

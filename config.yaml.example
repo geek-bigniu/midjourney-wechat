@@ -1,9 +1,9 @@
 # MJ_API接口地址
-api_url: http://xxx.com
+api_url: http://mj-api.168api.cn
 # 你的API密钥，可联系微信geek_bigniu获取
-api_key: xxxx
+api_key: xxx
 # 检查消息是否已处理，防止同一群多个机器人重复处理
-check_url: http://xxx.com
+check_url: http://check.168api.cn
 #发信邮件配置，请修改为你的邮箱
 smtp:
   host: smtp.gmail.com

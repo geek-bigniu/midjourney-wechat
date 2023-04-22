@@ -7,6 +7,7 @@ import (
 	"mj-wechat-bot/bot"
 	"mj-wechat-bot/errorhandler"
 	"mj-wechat-bot/msg"
+	"mj-wechat-bot/task"
 	"os"
 )
 
@@ -34,6 +35,9 @@ func main() {
 	// 注册消息处理函数
 	bot.Bot.MessageHandler = msg.OnMessage
 	bot.StartBot()
+	//启动循环任务
+	task.RunTask()
+
 	// 阻塞主goroutine, 直到发生异常或者用户主动退出
 	bot.Bot.Block()
 	// 等待操作系统信号或异常发生
