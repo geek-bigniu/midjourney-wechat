@@ -5,9 +5,11 @@ go 1.18
 require (
 	github.com/eatmoreapple/openwechat v1.4.1
 	github.com/go-redis/redis v6.15.9+incompatible
+	github.com/sashabaranov/go-openai v1.9.0
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	golang.org/x/image v0.6.0
 	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

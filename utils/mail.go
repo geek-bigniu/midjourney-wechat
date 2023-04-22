@@ -6,13 +6,24 @@ import (
 	"io/ioutil"
 	"log"
 	"mj-wechat-bot/errorhandler"
+	"net/http"
 	"net/smtp"
 	"strings"
 )
 
+var (
+	httpClient *http.Client
+)
+
+type ProxyConfig struct {
+	UseProxy bool   `yaml:"use_proxy"`
+	ProxyUrl string `yaml:"proxy_url"`
+}
+
 type Config struct {
-	Smtp Smtp       `yaml:"smtp"`
-	Mail MailConfig `yaml:"mail"`
+	Smtp  Smtp        `yaml:"smtp"`
+	Mail  MailConfig  `yaml:"mail"`
+	Proxy ProxyConfig `yaml:"proxy"`
 }
 
 type Smtp struct {

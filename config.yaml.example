@@ -4,6 +4,12 @@ api_url: http://mj-api.168api.cn
 api_key: xxx
 # 检查消息是否已处理，防止同一群多个机器人重复处理
 check_url: http://check.168api.cn
+# 下载discord图片的代理配置，非全局
+proxy:
+  # 是否开启代理 开启true 关闭false
+  use_proxy: true
+  # 代理地址 只有开启时生效
+  proxy_url: "http://127.0.0.1:7890"
 #发信邮件配置，请修改为你的邮箱
 smtp:
   host: smtp.gmail.com
