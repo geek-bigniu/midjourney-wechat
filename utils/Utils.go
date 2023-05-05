@@ -6,11 +6,30 @@ import (
 	"fmt"
 	"github.com/eatmoreapple/openwechat"
 	"io"
+	"log"
 	"net/http"
+	"net/url"
+	"time"
 )
 
 func GetImageUrlData(imageUrl string) (bool, io.Reader) {
-	resp, err := http.Get(imageUrl)
+	// 判断是否需要使用代理
+	resp := &http.Response{}
+	if config.Proxy.UseProxy {
+		proxyUrl, err := url.Parse(config.Proxy.ProxyUrl)
+		if err != nil {
+			log.Fatalf("invalid proxy URL: %v", err)
+		}
+
+		transport := &http.Transport{Proxy: http.ProxyURL(proxyUrl)}
+		httpClient = &http.Client{Transport: transport, Timeout: 5 * time.Second}
+		// 使用自定义的 HttpClient 发送请求
+
+	} else {
+		httpClient = &http.Client{Timeout: 10 * time.Second}
+	}
+
+	resp, err := httpClient.Get(imageUrl)
 	if err != nil {
 		fmt.Println(err)
 		return false, nil

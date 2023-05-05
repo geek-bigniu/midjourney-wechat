@@ -48,6 +48,11 @@ func (c Impl) Imagine() {
 		replyMsg := "❌这位新朋友，请先冒泡后再发送指令哦"
 		c.msg.ReplyText(replyMsg)
 	}
+	if c.realMsg == "" {
+		replyMsg := "❌指令错误，请输入/imagine+空格+内容"
+		c.msg.ReplyText(replyMsg)
+		return
+	}
 	ok, taskId := api.CreateMessage(c.realMsg)
 	if ok {
 		repleyMsg :=
@@ -177,7 +182,7 @@ func (c Impl) Help() {
 			"📗 附加参数列表\n" +
 			"1.(--version) 或 (--v) 《版本》 参数 1，2，3，4，5 默认5，不可与niji同用\n" +
 			"2.(--niji)《卡通版本》 参数 空或 5 默认空，不可与版本同用\n" +
-			"3.(--aspect) 或 (--ar) 《横纵比》 参数 n:n ，默认1:1 ,不通版本略有差异，具体详见机器人提示\n" +
+			"3.(--aspect) 或 (--ar) 《横纵比》 参数 n:n ，默认1:1 ，不同版本略有差异，具体详见机器人提示\n" +
 			"4.(--chaos) 或 (--c) 《噪点》参数 0-100 默认0\n" +
 			"5.(--quality) 或 (--q) 《清晰度》参数 .25 .5 1 2 分别代表，一般，清晰，高清，超高清，默认1\n" +
 			"6.(--style) 《风格》参数 4a,4b,4c (v4)版本可用，参数 expressive,cute (niji5)版本可用\n" +

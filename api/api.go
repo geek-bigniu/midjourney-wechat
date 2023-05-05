@@ -50,6 +50,7 @@ type Response struct {
 	Code int                    `json:"code"`
 	Data map[string]interface{} `json:"data"`
 	Msg  string                 `json:"msg"`
+	Time int                    `json:"time"`
 }
 
 func CreateMessage(text string) (bool, string) {
@@ -71,7 +72,7 @@ func CreateMessage(text string) (bool, string) {
 		fmt.Println(err)
 		return false, ""
 	}
-	if response.Code != 1 {
+	if response.Code != 0 {
 		fmt.Println(response.Msg)
 		return false, ""
 	}
@@ -105,7 +106,7 @@ func QueryTaskStatus(taskID string) (bool, map[string]interface{}) {
 		fmt.Println(err)
 		return false, nil
 	}
-	if response.Code != 1 {
+	if response.Code != 0 {
 		fmt.Println(response.Msg)
 		return false, nil
 	}
@@ -135,7 +136,7 @@ func TaskUpdate(taskId string, action string) (bool, string) {
 		fmt.Println(err)
 		return false, ""
 	}
-	if response.Code != 1 {
+	if response.Code != 0 {
 		fmt.Println(response.Msg)
 		return false, ""
 	}

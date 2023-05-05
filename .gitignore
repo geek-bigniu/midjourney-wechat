@@ -78,3 +78,4 @@ test
 *.json
 output.png
 .DS_Store
+release
