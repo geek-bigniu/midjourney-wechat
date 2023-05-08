@@ -4,6 +4,7 @@ import (
 	"github.com/eatmoreapple/openwechat"
 	"log"
 	"mj-wechat-bot/api"
+	"mj-wechat-bot/replay"
 	"mj-wechat-bot/task"
 	"mj-wechat-bot/utils"
 	"reflect"
@@ -26,6 +27,7 @@ type Command interface {
 type Impl struct {
 	msg     *openwechat.Message
 	realMsg string
+	info    replay.Info
 }
 
 func (c Impl) call(pre string, command string) {
@@ -44,88 +46,66 @@ func (c Impl) call(pre string, command string) {
 
 func (c Impl) Imagine() {
 	name, err := utils.GetUserName(c.msg)
+	c.info = replay.Info{
+		NickName: name,
+	}
 	if err != nil {
-		replyMsg := "❌这位新朋友，请先冒泡后再发送指令哦"
-		c.msg.ReplyText(replyMsg)
+		c.msg.ReplyText(c.info.GenrateMessage(replay.TaskNewUserErrMsg))
+		return
 	}
 	if c.realMsg == "" {
-		replyMsg := "❌指令错误，请输入/imagine+空格+内容"
-		c.msg.ReplyText(replyMsg)
+		c.msg.ReplyText(c.info.GenrateMessage(replay.TaskMainCommandErrMsg))
 		return
 	}
 	ok, taskId := api.CreateMessage(c.realMsg)
 	if ok {
-		repleyMsg :=
-			"@" + name + "\n" +
-				"✅你发送的任务已提交\n" +
-				"✨Prompt: " + c.realMsg + "\n" +
-				"🌟任务ID:\n" +
-				taskId + "\n" +
-				"🚀正在快速处理中,请稍后!"
-		c.msg.ReplyText(repleyMsg)
+		c.info.TaskId = taskId
+		c.info.Prompt = c.realMsg
+		c.msg.ReplyText(c.info.GenrateMessage(replay.TaskMainCreateMsg))
 		log.Printf("任务已经提交:%s", taskId)
 		c.msg.Set("type", "main")
 		task.AddTask(c.msg, taskId)
 	} else {
-		replyMsg :=
-			"@" + name + "\n" +
-				"❌任务创建失败，请联系管理员或稍后再试"
-		c.msg.ReplyText(replyMsg)
+		c.msg.ReplyText(c.info.GenrateMessage(replay.TaskSendErrMsg))
 	}
 }
 
 func (c Impl) Up() {
 	name, err := utils.GetUserName(c.msg)
+	c.info = replay.Info{
+		NickName: name,
+	}
 	if err != nil {
-		repleyMsg := "❌这位新朋友，请先冒泡后再发送指令哦"
-		c.msg.ReplyText(repleyMsg)
+		c.msg.ReplyText(c.info.GenrateMessage(replay.TaskNewUserErrMsg))
+		return
 	}
 	commands := strings.SplitN(c.realMsg, " ", 2)
 	if len(commands) != 2 {
-		c.msg.ReplyText("命令格式错误，示例:/up 任务id u1")
+		c.msg.ReplyText(c.info.GenrateMessage(replay.TaskSubCommandErrMsg))
 		return
 	}
 	taskId := strings.TrimSpace(commands[0])
 	action := strings.ToLower(strings.TrimSpace(commands[1]))
-
+	c.info.TaskId = taskId
+	c.info.Action = action
 	//判断action是否在指定字符串内
 	switch action {
 	case "u1", "u2", "u3", "u4", "v1", "v2", "v3", "v4":
 		break
 	default:
-		replyMsg :=
-			"@" + name + "\n" +
-				"❌参数错误\n" +
-				"✨可选参数:\n" +
-				"[ U1 ] [ U2 ] [ U3 ] [ U4 ] \n" +
-				"[ V1 ] [ V2 ] [ V3 ] [ V4 ] \n" +
-				"✏️ 可使用 [/up-任务ID-操作] 进行变换\n" +
-				"/up [任务id] U1"
-		c.msg.ReplyText(replyMsg)
+		c.msg.ReplyText(c.info.GenrateMessage(replay.TaskSubCommandErrMsg))
 		//c.msg.ReplyText("参数错误,可选参数:u1,u2,u3,u4,v1,v2,v3,v4")
 		return
 	}
 
 	ok, newTaskId := api.TaskUpdate(taskId, action)
 	if ok {
-		replyMsg :=
-			"@" + name + "\n" +
-				"✅你发送的任务已提交\n" +
-				"✨变换ID:\n" +
-				taskId + "\n" +
-				"🌟任务ID:\n" +
-				newTaskId + "\n" +
-				"💫变换类型: " + strings.ToUpper(action) + "\n" +
-				"🚀正在快速处理中,请稍后!"
-		c.msg.ReplyText(replyMsg)
+		c.msg.ReplyText(c.info.GenrateMessage(replay.TaskSubCreateMsg))
 		log.Printf("更新任务已经提交:%s", newTaskId)
 		c.msg.Set("type", strings.ToUpper(action))
 		task.AddTask(c.msg, newTaskId)
 	} else {
-		replyMsg :=
-			"@" + name + "\n" +
-				"❌任务创建失败，请联系管理员或稍后再试"
-		c.msg.ReplyText(replyMsg)
+		c.msg.ReplyText(c.info.GenrateMessage(replay.TaskSendErrMsg))
 		//c.msg.ReplyText("任务创建失败")
 	}
 }

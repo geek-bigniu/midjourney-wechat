@@ -10,6 +10,7 @@ import (
 	"log"
 	"mj-wechat-bot/api"
 	"mj-wechat-bot/bot"
+	"mj-wechat-bot/replay"
 	"mj-wechat-bot/utils"
 	"path"
 	"strings"
@@ -79,6 +80,7 @@ func Looper() {
 
 // QueryTaskStatus 查询任务状态并发送图片消息
 func QueryTaskStatus(taskId string) {
+
 	// 查询任务状态
 	ok, data := api.QueryTaskStatus(taskId)
 	value, ok1 := taskIds.Load(taskId)
@@ -88,6 +90,15 @@ func QueryTaskStatus(taskId string) {
 	}
 	userMsg := value.(*openwechat.Message)
 	fromUserName := userMsg.FromUserName
+
+	name, err := utils.GetUserName(userMsg)
+	if err == nil {
+
+	}
+	info := replay.Info{
+		NickName: name,
+		TaskId:   taskId,
+	}
 	if ok {
 		// 判断是否完成
 		switch data["status"] {
@@ -95,21 +106,15 @@ func QueryTaskStatus(taskId string) {
 		case "finished":
 			go func() {
 				url := data["image_url"].(string)
+				info.Url = url
 				ok := false
 				var reader io.Reader
 				failCount := 0
 				for !ok {
 					//转码失败3次
 					if failCount > 3 {
-						userMsg :=
-							"✅任务已完成\n" +
-								"ℹ️图片转码失败\n" +
-								"🌟任务ID:\n" +
-								taskId + "\n" +
-								"🧷任务返回图片地址:\n" +
-								url
 						//发送失败消息
-						failTask(taskId, fromUserName, userMsg)
+						failTask(taskId, fromUserName, info.GenrateMessage(replay.TaskTransImgErrMsg))
 						return
 					}
 					reader, ok = webp2png(url)
@@ -117,46 +122,17 @@ func QueryTaskStatus(taskId string) {
 					failCount++
 					time.Sleep(1 * time.Second)
 				}
-				name, err := utils.GetUserName(userMsg)
-				if err == nil {
-					typeName, exist := userMsg.Get("type")
-					if exist {
-						if typeName.(string) == "main" {
-							replyMsg :=
-								"@" + name + "\n" +
-									"🎨 绘画成功!\n" +
-									"📨 消息ID：\n" +
-									taskId + "\n" +
-									"🪄 变换：\n" +
-									"[ U1 ] [ U2 ] [ U3 ] [ U4 ] \n" +
-									"[ V1 ] [ V2 ] [ V3 ] [ V4 ] \n" +
-									"✏️ 可使用 [/up-任务ID-操作] 进行变换\n" +
-									"/up " + taskId + " U1"
 
-							userMsg.ReplyText(replyMsg)
-						} else if strings.HasPrefix(typeName.(string), "V") {
-							replyMsg :=
-								"@" + name + "\n" +
-									"🎨 绘画成功!\n" +
-									"📨 消息ID：\n" +
-									taskId + "\n" +
-									"🪄 变换：\n" +
-									"[ U1 ] [ U2 ] [ U3 ] [ U4 ] \n" +
-									"[ V1 ] [ V2 ] [ V3 ] [ V4 ] \n" +
-									"✏️ 可使用 [/up-任务ID-操作] 进行变换\n" +
-									"/up " + taskId + " U1"
+				typeName, exist := userMsg.Get("type")
+				if exist {
+					if typeName.(string) == "main" {
 
-							userMsg.ReplyText(replyMsg)
-						} else {
-							replyMsg :=
-								"@" + name + "\n" +
-									"🎨 绘画成功!\n" +
-									"📨 消息ID：\n" + taskId
-
-							userMsg.ReplyText(replyMsg)
-						}
+						userMsg.ReplyText(info.GenrateMessage(replay.TaskMainFinishMsg))
+					} else if strings.HasPrefix(typeName.(string), "V") {
+						userMsg.ReplyText(info.GenrateMessage(replay.TaskSubVFinishMsg))
+					} else {
+						userMsg.ReplyText(info.GenrateMessage(replay.TaskSubUFinishMsg))
 					}
-
 				}
 
 				addImageMsgChan(ImageMsg{
@@ -165,12 +141,6 @@ func QueryTaskStatus(taskId string) {
 					reader:       reader,
 					url:          url,
 				})
-				//sendImages.Put(ImageMsg{
-				//	taskId:       taskId,
-				//	fromUserName: fromUserName,
-				//	reader:       reader,
-				//	url:          url,
-				//})
 			}()
 			// 删除任务
 			taskIds.Delete(taskId)
@@ -183,52 +153,26 @@ func QueryTaskStatus(taskId string) {
 			break
 		case "invalid params":
 			// 任务参数错误
-			userMsg := fmt.Sprintf(
-				"❌任务被拒绝\n"+
-					"⭕️参数错误，请检查\n"+
-					"⚠️删除任务:\n"+
-					"%s", taskId)
-			failTask(taskId, fromUserName, userMsg)
+			failTask(taskId, fromUserName, info.GenrateMessage(replay.TaskParamsErrMsg))
 			break
 		case "invalid link":
 			// 任务参数错误
-			userMsg := fmt.Sprintf(
-				"❌任务被拒绝\n"+
-					"⭕️图片链接地址错误\n"+
-					"请提供能直接访问的图片链接地址\n"+
-					"⚠️删除任务:\n"+
-					"%s", taskId)
-			failTask(taskId, fromUserName, userMsg)
+			failTask(taskId, fromUserName, info.GenrateMessage(replay.TaskLinkErrMsg))
 			break
 		case "banned":
 			// 任务被封禁
 			// 任务参数错误
-			userMsg := fmt.Sprintf(
-				"❌任务被拒绝\n"+
-					"⭕️可能包含违禁词，请检查\n"+
-					"⚠️删除任务:\n"+
-					"%s", taskId)
-			failTask(taskId, fromUserName, userMsg)
+			failTask(taskId, fromUserName, info.GenrateMessage(replay.TaskBannedErrMsg))
 			break
 		case "error":
 			// 任务被封禁
 			// 任务参数错误
-			userMsg := fmt.Sprintf(
-				"❌任务失败\n"+
-					"⭕️任务处理超时，可重试\n"+
-					"⚠️删除任务:\n"+
-					"%s", taskId)
-			failTask(taskId, fromUserName, userMsg)
+			failTask(taskId, fromUserName, info.GenrateMessage(replay.TaskErrMsg))
 			break
 		}
 
 	} else {
-		userMsg := fmt.Sprintf(
-			"❌任务处理失败\n"+
-				"⭕️队列人数过多,请稍后再试\n"+
-				"⚠️删除任务:\n"+
-				"%s", taskId)
-		failTask(taskId, fromUserName, userMsg)
+		failTask(taskId, fromUserName, info.GenrateMessage(replay.TaskErrMsg1))
 	}
 	wg.Done()
 }
