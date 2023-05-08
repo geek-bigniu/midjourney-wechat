@@ -79,3 +79,4 @@ test
 output.png
 .DS_Store
 release
+*.zip

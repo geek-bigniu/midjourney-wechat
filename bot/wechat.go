@@ -31,12 +31,14 @@ func Relogin(bot *openwechat.Bot) {
 }
 func ConsoleQrCode(uuid string) {
 	qrcodeUrl := "https://login.weixin.qq.com/l/" + uuid
-	qrcodeUrlBulid := openwechat.GetQrcodeUrl(uuid)
-	log.Printf("请扫描下方二维码登陆或访问链接查询二维码: %s\n", qrcodeUrlBulid)
+	qrcodeUrlBuilder := openwechat.GetQrcodeUrl(uuid)
+	//调用外部浏览器打开url
+	utils.Open(qrcodeUrlBuilder)
+	log.Printf("请扫描下方二维码登陆或访问链接查询二维码: \n%s\n", qrcodeUrlBuilder)
 	q, _ := qrcode.New(qrcodeUrl, qrcode.Low)
 	fmt.Println(q.ToString(true))
 	// 启动发送邮件协程
-	go utils.SendMail(qrcodeUrlBulid)
+	go utils.SendMail(qrcodeUrlBuilder)
 
 }
 func StartBot() {

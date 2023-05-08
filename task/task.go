@@ -81,7 +81,11 @@ func Looper() {
 func QueryTaskStatus(taskId string) {
 	// 查询任务状态
 	ok, data := api.QueryTaskStatus(taskId)
-	value, ok := taskIds.Load(taskId)
+	value, ok1 := taskIds.Load(taskId)
+	if !ok1 {
+		wg.Done()
+		return
+	}
 	userMsg := value.(*openwechat.Message)
 	fromUserName := userMsg.FromUserName
 	if ok {
@@ -109,7 +113,9 @@ func QueryTaskStatus(taskId string) {
 						return
 					}
 					reader, ok = webp2png(url)
+
 					failCount++
+					time.Sleep(1 * time.Second)
 				}
 				name, err := utils.GetUserName(userMsg)
 				if err == nil {
@@ -204,6 +210,16 @@ func QueryTaskStatus(taskId string) {
 					"%s", taskId)
 			failTask(taskId, fromUserName, userMsg)
 			break
+		case "error":
+			// 任务被封禁
+			// 任务参数错误
+			userMsg := fmt.Sprintf(
+				"❌任务失败\n"+
+					"⭕️任务处理超时，可重试\n"+
+					"⚠️删除任务:\n"+
+					"%s", taskId)
+			failTask(taskId, fromUserName, userMsg)
+			break
 		}
 
 	} else {
@@ -242,6 +258,9 @@ func failTask(taskId string, fromUserName string, msg string) {
 func webp2png(url string) (io.Reader, bool) {
 	// 发送图片消息
 	ok, reader := utils.GetImageUrlData(url)
+	if !ok {
+		return nil, false
+	}
 	// 通过 path.Ext 函数解析链接地址中的后缀名
 	ext := path.Ext(url)
 	// 根据后缀名判断是否是 webp 格式的图片
